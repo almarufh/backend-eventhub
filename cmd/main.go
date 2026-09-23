@@ -1,8 +1,8 @@
 package main
 
 import (
+	"backend/EventHub/internal/router"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -12,10 +12,8 @@ import (
 func main() {
 	godotenv.Load()
 	host, port := os.Getenv("HOST"), os.Getenv("PORT")
-	r := gin.Default()
-	r.GET("/status", func(ctx *gin.Context) {
-		ctx.Header("Content-Type", "text/html; charset=utf-8")
-		ctx.String(http.StatusOK, "<h1>Server is running!</h1>")
-	})
-	r.Run(fmt.Sprintf("%s:%s", host, port))
+	server := gin.Default()
+	router.InitMainRouter(server)
+
+	server.Run(fmt.Sprintf("%s:%s", host, port))
 }
