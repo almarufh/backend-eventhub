@@ -1,0 +1,3 @@
+module backend/EventHub
+
+go 1.27.1
