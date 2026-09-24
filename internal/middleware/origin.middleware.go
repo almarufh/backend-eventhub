@@ -8,10 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (m *middleware) Origin(c *gin.Context) {
+func (m *Middleware) Origin(c *gin.Context) {
 	origin := c.GetHeader("Origin")
 	if origin == "" {
-		c.Next()
+		// c.Next()
+		c.JSON(http.StatusForbidden, gin.H{
+			"status":  false,
+			"message": "request must have origin allowed",
+		})
+		c.Abort()
 		return
 	}
 
