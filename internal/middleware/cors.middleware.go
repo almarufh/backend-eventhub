@@ -6,17 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type middleware struct {
+type Middleware struct {
 	allowedOrigins []string
 }
 
-func InitMiddleWare(origins []string) *middleware {
-	return &middleware{
+func InitMiddleWare(origins []string) *Middleware {
+	return &Middleware{
 		allowedOrigins: origins,
 	}
 }
 
-func (m *middleware) Cors(c *gin.Context) {
+func (m *Middleware) Cors(c *gin.Context) {
 	origin := c.GetHeader("Origin")
 	c.Header("Access-Control-Allow-Origin", origin)
 
