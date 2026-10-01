@@ -1,19 +1,31 @@
 package middleware
 
 import (
+	"backend/EventHub/internal/repo"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+type Payload struct {
+	ID        int32
+	Role      string
+	ExpiresIn int64
+}
+
 type Middleware struct {
 	allowedOrigins []string
+	authRepo       *repo.AuthRepo
 }
 
 func InitMiddleWare(origins []string) *Middleware {
 	return &Middleware{
 		allowedOrigins: origins,
 	}
+}
+
+func (m *Middleware) RepoAuthMiddleWare(authRepo *repo.AuthRepo) {
+	m.authRepo = authRepo
 }
 
 func (m *Middleware) Cors(c *gin.Context) {

@@ -3,7 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
-	"os"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,17 +16,25 @@ type Postgres struct {
 	Db_name  string
 }
 
-func NewPostgreSQL() *Postgres {
+func NewPostgreSQL(user, password, host, port, dbName string) *Postgres {
 	return &Postgres{
-		User:     os.Getenv("POSTGRES_USER"),
-		Password: os.Getenv("POSTGRES_PASSWORD"),
-		Host:     os.Getenv("POSTGRES_HOST"),
-		Port:     os.Getenv("POSTGRES_PORT"),
-		Db_name:  os.Getenv("POSTGRES_DB"),
+		User:     user,
+		Password: password,
+		Host:     host,
+		Port:     port,
+		Db_name:  dbName,
 	}
 }
 
-func (p *Postgres) Connect() (*pgxpool.Pool, error) {
+func (p *Postgres) Connect() *pgxpool.Pool {
 	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", p.User, p.Password, p.Host, p.Port, p.Db_name)
-	return pgxpool.New(context.Background(), url)
+	pool, err := pgxpool.New(context.Background(), url)
+	if err != nil {
+		log.Fatalf("Gagal inisialisasi database pool: %v", err)
+	}
+
+	if err := pool.Ping(context.Background()); err != nil {
+		log.Fatalf("Database tidak merespon: %v", err)
+	}
+	return pool
 }
