@@ -995,6 +995,9 @@
         },
         "dto.ReqChangePassword": {
             "type": "object",
+            "required": [
+                "email"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
@@ -1002,6 +1005,7 @@
                 },
                 "password": {
                     "type": "string",
+                    "minLength": 8,
                     "example": "Admin@1234"
                 }
             }
@@ -1038,6 +1042,9 @@
         },
         "dto.ReqRegister": {
             "type": "object",
+            "required": [
+                "email"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
@@ -1049,6 +1056,7 @@
                 },
                 "password": {
                     "type": "string",
+                    "minLength": 8,
                     "example": "Admin@1234"
                 }
             }

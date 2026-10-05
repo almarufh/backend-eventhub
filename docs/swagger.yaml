@@ -17,7 +17,10 @@ definitions:
         type: string
       password:
         example: Admin@1234
+        minLength: 8
         type: string
+    required:
+    - email
     type: object
   dto.ReqLogin:
     properties:
@@ -50,7 +53,10 @@ definitions:
         type: string
       password:
         example: Admin@1234
+        minLength: 8
         type: string
+    required:
+    - email
     type: object
   dto.ResSetProfile:
     properties:

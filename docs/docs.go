@@ -1001,6 +1001,9 @@ const docTemplate = `{
         },
         "dto.ReqChangePassword": {
             "type": "object",
+            "required": [
+                "email"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
@@ -1008,6 +1011,7 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
+                    "minLength": 8,
                     "example": "Admin@1234"
                 }
             }
@@ -1044,6 +1048,9 @@ const docTemplate = `{
         },
         "dto.ReqRegister": {
             "type": "object",
+            "required": [
+                "email"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
@@ -1055,6 +1062,7 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
+                    "minLength": 8,
                     "example": "Admin@1234"
                 }
             }

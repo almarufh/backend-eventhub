@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"backend/EventHub/internal/dto"
 	"backend/EventHub/internal/repo"
@@ -78,6 +79,15 @@ func (es *EventsService) GetDetailEvents(ctx context.Context, param int32) (dto.
 }
 
 func (es *EventsService) JoinEventService(ctx context.Context, ID int32, eventID int32) error {
+	event, err := es.er.GetDetailEvents(ctx, eventID)
+	if err != nil {
+		return err
+	}
+
+	if event.Attendee == event.Capacity {
+		return fmt.Errorf("Event full capacity %d/%d", event.Attendee, event.Capacity)
+	}
+
 	auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
 	if err != nil {
 		return err
