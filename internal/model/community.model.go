@@ -18,13 +18,13 @@ type CategorieMDL struct {
 }
 
 type DetailCommunitieMDL struct {
-	ID          int32  `db:"id"`
-	Title       string `db:"title"`
-	Description string `db:"description"`
-	Image       string `db:"image"`
-	Status      string `db:"status"`
-	Categories  string `db:"categories"`
-	Members     int32  `db:"members"`
+	ID          int32    `db:"id"`
+	Title       string   `db:"title"`
+	Description string   `db:"description"`
+	Image       string   `db:"image"`
+	Status      string   `db:"status"`
+	Categories  []string `db:"categories"`
+	Members     int32    `db:"members"`
 }
 
 type MembersCommunityMDL struct {

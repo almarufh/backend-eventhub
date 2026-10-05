@@ -2,11 +2,17 @@ package service
 
 import (
 	"backend/EventHub/internal/dto"
+	"backend/EventHub/internal/middleware"
 	"backend/EventHub/internal/repo"
 	"backend/EventHub/pkg"
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -15,30 +21,34 @@ var (
 )
 
 type AuthService struct {
-	ur   *repo.AuthRepo
-	conf *pkg.ConfigHash
+	ar    *repo.AuthRepo
+	conf  *pkg.ConfigHash
+	redis *redis.Client
+	db    *pgxpool.Pool
 }
 
-func NewAuthService(AuthRepo *repo.AuthRepo) *AuthService {
+func NewAuthService(AuthRepo *repo.AuthRepo, redis *redis.Client, db *pgxpool.Pool) *AuthService {
 	return &AuthService{
-		ur:   AuthRepo,
-		conf: pkg.NewConfigHash(),
+		ar:    AuthRepo,
+		conf:  pkg.NewConfigHash(),
+		redis: redis,
+		db:    db,
 	}
 }
 
-func (us *AuthService) RegisterAuthService(ctx context.Context, body dto.ReqRegister) (*dto.ResRegister, error) {
+func (as *AuthService) RegisterAuthService(ctx context.Context, body dto.ReqRegister) (*dto.ResRegister, error) {
 	if len(body.Email) == 0 || len(body.Name) == 0 || len(body.Password) <= 8 {
 		return nil, ErrFieldEmpty
 	}
 
-	hashPassword, err := us.conf.HashPassword(body.Password)
+	hashPassword, err := as.conf.HashPassword(body.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	body.Password = hashPassword
 
-	user, err := us.ur.RegisterAuthRepo(ctx, body)
+	user, err := as.ar.RegisterAuthRepo(ctx, as.db, body)
 
 	if err != nil {
 		return nil, err
@@ -51,19 +61,19 @@ func (us *AuthService) RegisterAuthService(ctx context.Context, body dto.ReqRegi
 	}, err
 }
 
-func (us *AuthService) LoginAuthService(ctx context.Context, body dto.ReqLogin) (*dto.ResLogin, error) {
+func (as *AuthService) LoginAuthService(ctx context.Context, body dto.ReqLogin) (*dto.ResLogin, error) {
 
 	if len(body.Email) == 0 || len(body.Password) <= 8 {
 		return nil, ErrFieldEmpty
 	}
 
-	user, err := us.ur.GetUserByEmail(ctx, body.Email)
+	user, err := as.ar.GetUserByEmail(ctx, as.db, body.Email)
 
 	if err != nil {
 		return nil, err
 	}
 
-	pwd, err := us.conf.Compare(body.Password, user.Password)
+	pwd, err := as.conf.Compare(body.Password, user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -82,53 +92,82 @@ func (us *AuthService) LoginAuthService(ctx context.Context, body dto.ReqLogin) 
 
 	body.Token = token
 
-	res, err := us.ur.Login(ctx, body)
+	res, err := as.ar.Login(ctx, as.db, body)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(res)
 	jwt = pkg.NewJWTClaims(res.ID, user.Role, 600)
 
 	token, err = jwt.GeneretToken()
 	return &dto.ResLogin{
-		Token: token,
+		Token:          token,
+		Name:           user.Name,
+		Role:           user.Role,
+		DarkPreference: user.DarkPreference,
+		Image:          user.Image,
 	}, nil
 }
 
-func (us *AuthService) LogoutAuthService(ctx context.Context, authID int32) error {
-	if authID <= 0 {
+func (as *AuthService) LogoutAuthService(ctx context.Context, payload *middleware.Payload) error {
+	if payload.ID <= 0 {
 		return errors.New("invalid auth id")
 	}
 
-	err := us.ur.Logout(ctx, authID)
+	key := fmt.Sprintf("Token:%d", payload.ID)
+	err := as.ar.Logout(ctx, as.db, payload.ID)
 	if err != nil {
 		return err
+	}
+
+	ttl := time.Duration(payload.ExpiresIn) * time.Second
+	if ttl <= 0 {
+		ttl = 1 * time.Second
+	}
+
+	err = as.redis.Set(ctx, key, "1", ttl).Err()
+	if err != nil {
+		log.Printf("[Redis.Set] Critical Error setting key %s (TTL: %v): %v\n", key, ttl, err)
 	}
 
 	return nil
 }
 
-func (us *AuthService) ChangePassword(ctx context.Context, body dto.ReqChangePassword) error {
-	user, err := us.ur.GetUserByEmail(ctx, body.Email)
+func (as *AuthService) ChangePassword(ctx context.Context, body dto.ReqChangePassword) error {
+	tx, err := as.db.Begin(ctx)
+	if err != nil {
+		return pkg.ParseError(err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			log.Println(err.Error())
+		}
+	}()
+
+	user, err := as.ar.GetUserByEmail(ctx, as.db, body.Email)
 	if err != nil {
 		return err
 	}
 
-	if body.New_password != body.Confirm_password {
-		return errors.New("wrong confirm password")
+	if len(body.Password) < 8 {
+		return errors.New("password minimal 8 character")
 	}
 
-	pwd, err := us.conf.HashPassword(body.New_password)
+	pwd, err := as.conf.HashPassword(body.Password)
 	if err != nil {
 		return err
 	}
 
 	body.ID = user.ID
-	body.New_password = pwd
+	body.Password = pwd
 
-	err = us.ur.ChangePassword(ctx, body.New_password, body.ID)
+	err = as.ar.ChangePassword(ctx, tx, body.Password, body.ID)
 	if err != nil {
 		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return pkg.ParseError(err)
 	}
 
 	return nil

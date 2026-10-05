@@ -11,11 +11,11 @@ import (
 func (m *Middleware) Origin(c *gin.Context) {
 	origin := c.GetHeader("Origin")
 	if origin == "" {
-		// c.Next()
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"status":  false,
-			"message": "request must have origin allowed",
-		})
+		c.Next()
+		// c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+		// 	"status":  false,
+		// 	"message": "request must have origin allowed",
+		// })
 		return
 	}
 

@@ -3,7 +3,7 @@ package model
 import "time"
 
 type ProfileMDL struct {
-	Name        string  `db:"name"`
+	Name        *string `db:"name"`
 	Address     *string `db:"address"`
 	Job         *string `db:"job"`
 	Office      *string `db:"office"`

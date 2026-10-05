@@ -12,18 +12,19 @@ import (
 type CommunitieService struct {
 	ar *repo.AuthRepo
 	cr *repo.CommuntyRepo
+	db *pgxpool.Pool
 }
 
-func NewCommunitieService(db *pgxpool.Pool, cr *repo.CommuntyRepo) *CommunitieService {
-	repo := repo.NewAuthRepo(db)
+func NewCommunitieService(db *pgxpool.Pool, cr *repo.CommuntyRepo, ar *repo.AuthRepo) *CommunitieService {
 	return &CommunitieService{
-		ar: repo,
+		ar: ar,
 		cr: cr,
+		db: db,
 	}
 }
 
 func (cs *CommunitieService) ToggleJoinCommunity(ctx context.Context, param int32, payload *middleware.Payload) (*dto.ResJoinCommunity, error) {
-	auth, err := cs.ar.GetAuthUser(ctx, payload.ID)
+	auth, err := cs.ar.GetAuthUser(ctx, cs.db, payload.ID)
 	if err != nil {
 		return nil, err
 	}

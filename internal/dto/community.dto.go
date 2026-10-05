@@ -11,13 +11,13 @@ type ReqJoinCommunity struct {
 }
 
 type ResDetailCommunitiy struct {
-	ID          int32  `json:"community_id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Image       string `json:"image"`
-	Status      string `json:"status"`
-	Categories  string `json:"categories"`
-	Members     int32  `json:"members"`
+	ID          int32    `json:"community_id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Image       string   `json:"image"`
+	Status      string   `json:"status"`
+	Categories  []string `json:"categories"`
+	Members     int32    `json:"members"`
 }
 
 type ResMembersCommunity struct {

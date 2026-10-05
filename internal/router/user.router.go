@@ -7,22 +7,34 @@ import (
 )
 
 func (r *Router) userRouter() {
-	user := r.router.Group("user")
-	user.Use(r.middleware.AuthMiddleware)
-	set := user.Group("set")
-
 	ur := repo.NewUserRepo(r.pool)
-	ar := repo.NewAuthRepo(r.pool)
-	as := service.NewAuthService(ar)
-	us := service.NewUserService(r.pool, ur, ar, as, r.redis)
+	er := repo.NewEventsRepo(r.pool)
+	ar := repo.NewAuthRepo()
+	as := service.NewAuthService(ar, r.redis, r.pool)
+	us := service.NewUserService(r.pool, ur, ar, as, r.redis, er)
 	uh := handler.NewUserHandler(r.middleware, us)
 
+	user := r.router.Group("user")
+	user.Use(r.middleware.AuthMiddleware)
 	{
-		user.GET("profiles", uh.MyProfile)
+		user.GET("profiles", r.middleware.AuthMiddleware, uh.MyProfile)
+
 	}
 
+	events := user.Group("events")
 	{
-		set.PATCH("password", uh.NewPassword)
-		set.PATCH("profiles", uh.SetProfile)
+		events.GET("joined", r.middleware.AuthMiddleware, uh.JoinedEvents)
+		events.GET("saved", r.middleware.AuthMiddleware, uh.SavedEvents)
+	}
+
+	community := user.Group("community")
+	{
+		community.GET("joined", r.middleware.AuthMiddleware, uh.JoinedCommunities)
+	}
+
+	set := user.Group("set")
+	{
+		set.PATCH("password", r.middleware.AuthMiddleware, uh.NewPassword)
+		set.PATCH("profiles", r.middleware.AuthMiddleware, uh.SetProfile)
 	}
 }

@@ -186,9 +186,8 @@ func (ah *AuthHandler) FormatValidationError(err error) map[string]string {
 // @Failure			401		{object}	dto.ErrResponse
 // @Failure			500		{object}	dto.ErrResponse
 func (ah *AuthHandler) Logout(ctx *gin.Context) {
-	payload, err := ah.middleware.GetPayload(ctx)
-	if err != nil || payload == nil {
-		log.Printf("[AuthHandler.Logout] Unauthorized: %v\n", err)
+	rawPayload, ok := ctx.Get("payload")
+	if !ok {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Success: false,
 			Message: "Unauthorized",
@@ -196,9 +195,17 @@ func (ah *AuthHandler) Logout(ctx *gin.Context) {
 		return
 	}
 
-	authID := int32(payload.ID)
+	payload, ok := rawPayload.(*middleware.Payload)
+	if !ok {
+		log.Println("[AuthHandler.Logout] Unauthorized: invalid payload type")
+		ctx.JSON(http.StatusUnauthorized, dto.Response{
+			Success: false,
+			Message: "Unauthorized",
+		})
+		return
+	}
 
-	err = ah.as.LogoutAuthService(ctx.Request.Context(), authID)
+	err := ah.as.LogoutAuthService(ctx.Request.Context(), payload)
 	if err != nil {
 		log.Printf("[AuthHandler.Logout] Service error: %s\n", err.Error())
 
@@ -226,15 +233,15 @@ func (ah *AuthHandler) Logout(ctx *gin.Context) {
 
 // Create Password
 //
-// @Summary			Forgot Password
-// @Description		Create new password when fforgot old password
-// @Tags			Auth
-// @Accept			json
-// @Produce			json
-// @Router			/auth/forgot/password	[patch]
-// @Param			data	body 	dto.ReqChangePassword true "Body to Create New Password"
-// @Success			200		{object}	dto.Response
-// @Failure			400		{object}	dto.ErrResponse
+// @Summary      Forgot Password
+// @Description  Create new password when forgot old password
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        data body dto.ReqChangePassword true "Body to Create New Password"
+// @Success      200 {object} dto.Response
+// @Failure      400 {object} dto.ErrResponse
+// @Router       /auth/forgot/password [patch]
 func (ah *AuthHandler) ChangePassword(ctx *gin.Context) {
 	var body dto.ReqChangePassword
 	if err := ctx.ShouldBindWith(&body, binding.JSON); err != nil {

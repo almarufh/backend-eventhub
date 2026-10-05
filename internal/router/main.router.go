@@ -2,6 +2,8 @@ package router
 
 import (
 	"backend/EventHub/internal/middleware"
+	"fmt"
+	"os"
 
 	_ "backend/EventHub/docs"
 
@@ -30,10 +32,19 @@ func NewRouter(router *gin.Engine, pool *pgxpool.Pool, middleware *middleware.Mi
 
 func (r *Router) Connect() {
 
-	r.router.GET("/docs/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.statusServer()
 	r.router.Use(r.middleware.Origin, r.middleware.Cors)
+	r.router.GET("/docs/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	go func() {
+		swaggerServer := gin.Default()
+		swaggerServer.GET("/docs/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		swaggerServer.Run(fmt.Sprintf("%s:2029", os.Getenv("HOST")))
+	}()
+
+	r.staticRouter()
 	r.authRouter()
 	r.userRouter()
 	r.communitieRouter()
+	r.eventRouter()
 }

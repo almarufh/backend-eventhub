@@ -9,12 +9,10 @@ import (
 func (r *Router) authRouter() {
 	auth := r.router.Group("/auth")
 
-	ar := repo.NewAuthRepo(r.pool)
-	as := service.NewAuthService(ar)
+	ar := repo.NewAuthRepo()
+	as := service.NewAuthService(ar, r.redis, r.pool)
 	ah := handler.NewAuthHandler(as, r.middleware)
 	r.middleware.RepoAuthMiddleWare(ar)
-
-	auth.GET("/cektoken", r.middleware.CekDong)
 
 	{
 		auth.POST("/register", ah.Register)

@@ -10,14 +10,21 @@ func (r *Router) communitieRouter() {
 	com := r.router.Group("communities")
 
 	cr := repo.NewCommunityRepo(r.pool)
-	cs := service.NewCommunitieService(r.pool, cr)
+	ar := repo.NewAuthRepo()
+	cs := service.NewCommunitieService(r.pool, cr, ar)
 	ch := handler.NewCommunityHandler(r.middleware, cs)
 
 	{
 		com.GET(":id", ch.GetDetailCommunity)
 		com.GET(":id/members", ch.GetMembersCommunity)
-		com.POST(":id/join", ch.JoinCommunity)
-		com.DELETE(":id/leave", ch.JoinCommunity)
+	}
+
+	auth := com.Group("")
+	auth.Use(r.middleware.AuthMiddleware)
+
+	{
+		auth.POST(":id/join", r.middleware.AuthMiddleware, ch.JoinCommunity)
+		auth.DELETE(":id/leave", r.middleware.AuthMiddleware, ch.LeaveCommunity)
 	}
 
 }

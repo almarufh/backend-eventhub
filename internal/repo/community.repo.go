@@ -74,7 +74,7 @@ func (ur *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*mode
 		    c.description,
 		    c.image,
 		    c.status,
-		    STRING_AGG(cg.name, ', ') AS "categories",
+		    COALESCE(ARRAY_AGG(DISTINCT cg.name)) AS "categories",
 		    (
 		        SELECT COUNT(user_id) 
 		        FROM communities_users 
@@ -82,7 +82,7 @@ func (ur *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*mode
 		    ) AS "members"
 		FROM communities c
 		LEFT JOIN communities_categories cc ON c.id = cc.community_id
-		LEFT JOIN categories cg ON cg.id = cc.categories_id
+		LEFT JOIN categories cg ON cg.id = cc.category_id
 		WHERE c.id = $1
 		GROUP BY c.id;
     `
@@ -145,4 +145,38 @@ func (ur *CommuntyRepo) GetMembersCommunity(ctx context.Context, ID int32) (*[]m
 	}
 
 	return &membersCommunities, nil
+}
+
+func (er *EventsRepo) GetCategoryCommunity(ctx context.Context, eventID int32) ([]string, error) {
+	query := `
+        SELECT
+			c.name
+		FROM categories c
+		JOIN communities_categories cc ON c.id = cc.category_id
+		WHERE cc.community_id = $1
+	`
+
+	rows, err := er.db.Query(ctx, query, eventID)
+	if err != nil {
+		return nil, pkg.ParseError(err)
+	}
+	defer rows.Close()
+
+	var categories []string
+
+	for rows.Next() {
+		var category string
+		if err := rows.Scan(
+			&category,
+		); err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }

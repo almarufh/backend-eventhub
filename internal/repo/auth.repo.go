@@ -8,7 +8,8 @@ import (
 	"backend/EventHub/internal/model"
 	"backend/EventHub/pkg"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var (
@@ -16,17 +17,19 @@ var (
 	ErrRegisterFailed     = errors.New("failed to register user")
 )
 
-type AuthRepo struct {
-	db *pgxpool.Pool
+type DbConn interface {
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 }
 
-func NewAuthRepo(db *pgxpool.Pool) *AuthRepo {
-	return &AuthRepo{
-		db: db,
-	}
+type AuthRepo struct{}
+
+func NewAuthRepo() *AuthRepo {
+	return &AuthRepo{}
 }
 
-func (u *AuthRepo) RegisterAuthRepo(ctx context.Context, body dto.ReqRegister) (*model.RegisterMDL, error) {
+func (u *AuthRepo) RegisterAuthRepo(ctx context.Context, db DbConn, body dto.ReqRegister) (*model.RegisterMDL, error) {
 	query := `
         WITH new_user AS (
             INSERT INTO users (
@@ -58,7 +61,7 @@ func (u *AuthRepo) RegisterAuthRepo(ctx context.Context, body dto.ReqRegister) (
 	args := []any{body.Email, body.Password, body.Name, role}
 
 	var profile model.RegisterMDL
-	err := u.db.QueryRow(ctx, query, args...).Scan(
+	err := db.QueryRow(ctx, query, args...).Scan(
 		&profile.ID,
 		&profile.Name,
 		&profile.Role,
@@ -71,7 +74,7 @@ func (u *AuthRepo) RegisterAuthRepo(ctx context.Context, body dto.ReqRegister) (
 	return &profile, nil
 }
 
-func (u *AuthRepo) Login(ctx context.Context, body dto.ReqLogin) (*model.LoginMDL, error) {
+func (u *AuthRepo) Login(ctx context.Context, db DbConn, body dto.ReqLogin) (*model.LoginMDL, error) {
 	query := `
 		WITH new_user_login AS (
 		    SELECT u.id
@@ -93,7 +96,7 @@ func (u *AuthRepo) Login(ctx context.Context, body dto.ReqLogin) (*model.LoginMD
 	args := []any{body.Email, body.Password, body.Token, body.Device}
 
 	var authUser model.LoginMDL
-	err := u.db.QueryRow(ctx, query, args...).Scan(
+	err := db.QueryRow(ctx, query, args...).Scan(
 		&authUser.ID,
 		&authUser.User_id,
 		&authUser.Token,
@@ -110,7 +113,7 @@ func (u *AuthRepo) Login(ctx context.Context, body dto.ReqLogin) (*model.LoginMD
 	return &authUser, nil
 }
 
-func (u *AuthRepo) GetUserByEmail(ctx context.Context, email string) (*model.UserMDL, error) {
+func (u *AuthRepo) GetUserByEmail(ctx context.Context, db DbConn, email string) (*model.UserMDL, error) {
 	query := `
 		SELECT 
 		    u.id, 
@@ -119,17 +122,17 @@ func (u *AuthRepo) GetUserByEmail(ctx context.Context, email string) (*model.Use
 		    p.name,
 		    p.role,
 		    p.dark_preference,
+		    p.address,
 		    p.job,
 		    p.office,
-		    p.address,
 		    p.image,
 		    p.description
 		FROM users u
 		JOIN profiles p ON u.id = p.user_id
-		WHERE u.email = $1;
+		WHERE u.email = $1
 	`
 	var user model.UserMDL
-	err := u.db.QueryRow(ctx, query, email).Scan(
+	err := db.QueryRow(ctx, query, email).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password,
@@ -153,7 +156,7 @@ func (u *AuthRepo) GetUserByEmail(ctx context.Context, email string) (*model.Use
 	return &user, nil
 }
 
-func (u *AuthRepo) GetUserById(ctx context.Context, id int32) (*model.UserMDL, error) {
+func (u *AuthRepo) GetUserById(ctx context.Context, db DbConn, id int32) (*model.UserMDL, error) {
 	query := `
 		SELECT 
 		    u.id, 
@@ -162,9 +165,9 @@ func (u *AuthRepo) GetUserById(ctx context.Context, id int32) (*model.UserMDL, e
 		    p.name,
 		    p.role,
 		    p.dark_preference,
+		    p.address,
 		    p.job,
 		    p.office,
-		    p.address,
 		    p.image,
 		    p.description
 		FROM users u
@@ -172,7 +175,7 @@ func (u *AuthRepo) GetUserById(ctx context.Context, id int32) (*model.UserMDL, e
 		WHERE u.id = $1;
 	`
 	var user model.UserMDL
-	err := u.db.QueryRow(ctx, query, id).Scan(
+	err := db.QueryRow(ctx, query, id).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password,
@@ -196,7 +199,7 @@ func (u *AuthRepo) GetUserById(ctx context.Context, id int32) (*model.UserMDL, e
 	return &user, nil
 }
 
-func (u *AuthRepo) GetAuthUser(ctx context.Context, id int32) (*model.AuthUser, error) {
+func (u *AuthRepo) GetAuthUser(ctx context.Context, db DbConn, id int32) (*model.AuthUser, error) {
 	query := `
         SELECT user_id, is_active, token
         FROM auth_users
@@ -204,7 +207,7 @@ func (u *AuthRepo) GetAuthUser(ctx context.Context, id int32) (*model.AuthUser, 
     `
 
 	var authUser model.AuthUser
-	err := u.db.QueryRow(ctx, query, id).Scan(
+	err := db.QueryRow(ctx, query, id).Scan(
 		&authUser.User_id,
 		&authUser.IsActive,
 		&authUser.Token,
@@ -221,7 +224,7 @@ func (u *AuthRepo) GetAuthUser(ctx context.Context, id int32) (*model.AuthUser, 
 	return &authUser, nil
 }
 
-func (u *AuthRepo) Logout(ctx context.Context, id int32) error {
+func (u *AuthRepo) Logout(ctx context.Context, db DbConn, id int32) error {
 	query := `
 		UPDATE auth_users
 		SET is_active = FALSE,
@@ -229,7 +232,7 @@ func (u *AuthRepo) Logout(ctx context.Context, id int32) error {
 		WHERE id = $1 AND is_active = TRUE
 	`
 
-	tag, err := u.db.Exec(ctx, query, id)
+	tag, err := db.Exec(ctx, query, id)
 	if err != nil {
 		return pkg.ParseError(err)
 	}
@@ -241,21 +244,31 @@ func (u *AuthRepo) Logout(ctx context.Context, id int32) error {
 	return nil
 }
 
-func (u *AuthRepo) ChangePassword(ctx context.Context, password string, ID int32) error {
-	query := `
+func (u *AuthRepo) ChangePassword(ctx context.Context, db DbConn, password string, ID int32) error {
+	queryUser := `
         UPDATE users
         SET password = $1,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
+        WHERE id = $2;
     `
-	args := []any{password, ID}
-	tag, err := u.db.Exec(ctx, query, args...)
+	tag, err := db.Exec(ctx, queryUser, password, ID)
 	if err != nil {
 		return pkg.ParseError(err)
 	}
 
 	if tag.RowsAffected() == 0 {
 		return errors.New("user not found")
+	}
+
+	queryAuth := `
+        UPDATE auth_users
+        SET is_active = FALSE,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $1 AND is_active = TRUE;
+    `
+	_, err = db.Exec(ctx, queryAuth, ID)
+	if err != nil {
+		return pkg.ParseError(err)
 	}
 
 	return nil

@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type Payload struct {
@@ -16,11 +18,15 @@ type Payload struct {
 type Middleware struct {
 	allowedOrigins []string
 	authRepo       *repo.AuthRepo
+	pool           *pgxpool.Pool
+	redis          *redis.Client
 }
 
-func InitMiddleWare(origins []string) *Middleware {
+func InitMiddleWare(origins []string, pool *pgxpool.Pool, redis *redis.Client) *Middleware {
 	return &Middleware{
 		allowedOrigins: origins,
+		pool:           pool,
+		redis:          redis,
 	}
 }
 
