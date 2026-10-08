@@ -33,7 +33,7 @@ const htmlContent = `
 `
 
 func (r *Router) statusServer() {
-	r.router.GET("", func(ctx *gin.Context) {
+	r.router.GET("/", func(ctx *gin.Context) {
 		ctx.Data(http.StatusOK, "text/html; charset=utf-8", []byte(htmlContent))
 	})
 }

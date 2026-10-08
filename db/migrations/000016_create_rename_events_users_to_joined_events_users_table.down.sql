@@ -1,0 +1,3 @@
+ALTER TABLE joined_events_users RENAME CONSTRAINT fk_joined_events_users_user TO fk_events_users_user;
+ALTER TABLE joined_events_users RENAME CONSTRAINT fk_joined_events_users_event TO fk_events_users_event;
+ALTER TABLE joined_events_users RENAME TO events_users;
