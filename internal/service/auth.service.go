@@ -105,6 +105,7 @@ func (as *AuthService) LoginAuthService(ctx context.Context, body dto.ReqLogin) 
 		Role:           user.Role,
 		DarkPreference: user.DarkPreference,
 		Image:          user.Image,
+		Email:          user.Email,
 	}, nil
 }
 

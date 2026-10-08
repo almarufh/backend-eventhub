@@ -30,11 +30,11 @@ func (p *Postgres) Connect() *pgxpool.Pool {
 	url := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", p.User, p.Password, p.Host, p.Port, p.Db_name)
 	pool, err := pgxpool.New(context.Background(), url)
 	if err != nil {
-		log.Fatalf("Gagal inisialisasi database pool: %v", err)
+		log.Printf("Gagal inisialisasi database pool: %v", err)
 	}
 
 	if err := pool.Ping(context.Background()); err != nil {
-		log.Fatalf("Database tidak merespon: %v", err)
+		log.Printf("Database tidak merespon: %v", err)
 	}
 	return pool
 }

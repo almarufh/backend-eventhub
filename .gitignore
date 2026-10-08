@@ -1,3 +1,8 @@
 .env*
+!.env.example
+.gitignore
 .air.toml
 tmp/
+.git
+public/
+.dockerignore

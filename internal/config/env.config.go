@@ -21,7 +21,7 @@ func LoadEnv() *Env {
 	origins := os.Getenv("ALLOWED_ORIGINS")
 	var allowedOrigins []string
 	for _, o := range strings.Split(origins, ",") {
-		trimmed := strings.TrimSpace(o)
+		trimmed := strings.Trim(o, " \t\n\r\"'")
 		if trimmed != "" {
 			allowedOrigins = append(allowedOrigins, trimmed)
 		}

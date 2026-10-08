@@ -6,9 +6,6 @@ import (
 	"backend/EventHub/pkg"
 	"context"
 	"errors"
-	"fmt"
-	"log"
-	"math"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -214,149 +211,259 @@ func (er *EventsRepo) UnsaveEventRepo(ctx context.Context, userID int32, eventID
 	return nil
 }
 
-func (er *EventsRepo) GetAllEvents(ctx context.Context, filter EventFilter) ([]model.DetailEvenstMDL, PaginationMeta, error) {
-	if filter.Page <= 0 {
-		filter.Page = 1
-	}
-	if filter.Limit <= 0 {
-		filter.Limit = 10
-	}
-	offset := (filter.Page - 1) * filter.Limit
+// func (er *EventsRepo) GetAllEventsRepo(ctx context.Context, search string, categories []string, page int) ([]model.DetailEvenstMDL, error) {
 
-	baseQuery := `
-        SELECT 
-            e.id,
-            c.title AS community,
-            e.organizer_id,
-            COUNT(DISTINCT je_all.user_id) AS attendee,
-            e.title,
-            e.location,
-            e.description,
-            e.image,
-            e.capacity,
-            e.start_time,
-            e.end_time,
-            e.created_at,
-            e.updated_at,
-            COUNT(*) OVER() AS total_count
-        FROM events e
-        JOIN communities c ON c.id = e.community_id
-        LEFT JOIN categories cat ON cat.id = e.category_id
-        LEFT JOIN joined_events_users je_all ON je_all.event_id = e.id
-        WHERE 1=1
-    `
-	var args []any
-	argIdx := 1
+// 	limit := 6
 
-	if filter.Category != "" {
-		baseQuery += fmt.Sprintf(" AND cat.name ILIKE $%d", argIdx)
-		args = append(args, filter.Category)
-		argIdx++
-	}
+// 	if page < 1 {
+// 		page = 1
+// 	}
 
-	if filter.Location != "" {
-		baseQuery += fmt.Sprintf(" AND e.location ILIKE $%d", argIdx)
-		args = append(args, "%"+filter.Location+"%")
-		argIdx++
-	}
+// 	offset := (page - 1) * limit
 
-	if filter.Search != "" {
-		baseQuery += fmt.Sprintf(" AND e.title ILIKE $%d", argIdx)
-		args = append(args, "%"+filter.Search+"%")
-		argIdx++
-	}
+// 	query := `
+// 		SELECT
+// 			e.id,
+// 			c.title AS community,
+// 			e.organizer_id,
 
-	baseQuery += ` GROUP BY e.id, c.title`
+// 			(
+// 				SELECT COUNT(*)
+// 				FROM joined_events_users je
+// 				WHERE je.event_id = e.id
+// 			) AS attendee,
 
-	switch filter.SortBy {
-	case "most_popular":
-		baseQuery += ` ORDER BY attendee DESC, e.start_time ASC`
+// 			e.title,
+// 			e.location,
+// 			e.description,
+// 			e.image,
+// 			e.capacity,
+// 			e.start_time,
+// 			e.end_time,
+// 			e.created_at,
+// 			e.updated_at
 
-	case "almost_full":
-		baseQuery += ` ORDER BY (COUNT(DISTINCT je_all.user_id)::float / NULLIF(e.capacity, 0)) DESC`
+// 		FROM events e
+// 		JOIN communities c
+// 			ON c.id = e.community_id
+// 	`
 
-	case "recently_added":
-		baseQuery += ` ORDER BY e.created_at DESC`
+// 	var args []interface{}
+// 	var conditions []string
+// 	argPosition := 1
 
-	case "upcoming":
-		fallthrough
-	default:
-		baseQuery += ` AND e.start_time >= NOW() ORDER BY e.start_time ASC`
-	}
+// 	if search != "" {
+// 		conditions = append(conditions, fmt.Sprintf(`
+// 			(
+// 				POSITION(LOWER($%d) IN LOWER(e.title)) > 0
+// 				OR
+// 				POSITION(LOWER($%d) IN LOWER(c.title)) > 0
+// 				OR
+// 				POSITION(LOWER($%d) IN LOWER(e.location)) > 0
+// 			)
+// 		`, argPosition, argPosition, argPosition))
 
-	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIdx, argIdx+1)
-	args = append(args, filter.Limit, offset)
+// 		args = append(args, search)
+// 		argPosition++
+// 	}
 
-	rows, err := er.db.Query(ctx, baseQuery, args...)
-	if err != nil {
-		log.Printf("[UserRepo.GetAllEvents] Query Error: %v", err)
-		return nil, PaginationMeta{}, fmt.Errorf("gagal mengambil data events: %w", err)
-	}
-	defer rows.Close()
+// 	if len(categories) > 0 {
+// 		conditions = append(conditions, fmt.Sprintf(`
+// 			(
+// 				SELECT COUNT(DISTINCT ca.id)
+// 				FROM events_categories ec
+// 				JOIN categories ca
+// 					ON ca.id = ec.category_id
+// 				WHERE ec.event_id = e.id
+// 				AND EXISTS (
+// 					SELECT 1
+// 					FROM unnest($%d::text[]) AS search_category
+// 					WHERE POSITION(
+// 						LOWER(search_category)
+// 						IN LOWER(ca.name)
+// 					) > 0
+// 				)
+// 			) = cardinality($%d::text[])
+// 		`, argPosition, argPosition))
 
-	events := make([]model.DetailEvenstMDL, 0)
-	var totalItems int64 = 0
+// 		args = append(args, categories)
+// 		argPosition++
+// 	}
 
-	for rows.Next() {
-		var event model.DetailEvenstMDL
-		err := rows.Scan(
-			&event.ID,
-			&event.Community,
-			&event.Organizer.ID,
-			&event.Attendee,
-			&event.Title,
-			&event.Location,
-			&event.Description,
-			&event.Image,
-			&event.Capacity,
-			&event.StartTime,
-			&event.EndTime,
-			&event.CreatedAt,
-			&event.UpdatedAt,
-			&totalItems,
-		)
-		if err != nil {
-			return nil, PaginationMeta{}, fmt.Errorf("gagal memindai data event: %w", err)
-		}
-		events = append(events, event)
-	}
+// 	if len(conditions) > 0 {
+// 		query += " WHERE " + strings.Join(conditions, " AND ")
+// 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, PaginationMeta{}, fmt.Errorf("kesalahan membaca baris event: %w", err)
-	}
+// 	query += `
+// 		ORDER BY attendee DESC
+// 	`
 
-	totalPages := 0
-	if totalItems > 0 {
-		totalPages = int(math.Ceil(float64(totalItems) / float64(filter.Limit)))
-	}
+// 	query += fmt.Sprintf(`
+// 		LIMIT %d
+// 		OFFSET $%d
+// 	`, limit, argPosition)
 
-	meta := PaginationMeta{
-		CurrentPage: filter.Page,
-		TotalPages:  totalPages,
-		Limit:       filter.Limit,
-		TotalItems:  totalItems,
-	}
+// 	args = append(args, offset)
 
-	return events, meta, nil
-}
+// 	rows, err := er.db.Query(ctx, query, args...)
+// 	if err != nil {
+// 		return nil, pkg.ParseError(err)
+// 	}
 
-type EventFilter struct {
-	Category string
-	Location string
-	Search   string
-	SortBy   string
-	Page     int
-	Limit    int
-}
+// 	var events []model.DetailEvenstMDL
+// 	var eventIDs []int32
 
-type PaginationMeta struct {
-	CurrentPage int   `json:"current_page"`
-	TotalPages  int   `json:"total_pages"`
-	Limit       int   `json:"limit"`
-	TotalItems  int64 `json:"total_items"`
-}
+// 	for rows.Next() {
+// 		var event model.DetailEvenstMDL
 
-type PaginatedEventsResponse struct {
-	Events []model.DetailEvenstMDL `json:"events"`
-	Meta   PaginationMeta          `json:"meta"`
-}
+// 		err := rows.Scan(
+// 			&event.ID,
+// 			&event.Community,
+// 			// &event.OrganizerID,
+// 			&event.Attendee,
+// 			&event.Title,
+// 			&event.Location,
+// 			&event.Description,
+// 			&event.Image,
+// 			&event.Capacity,
+// 			&event.StartTime,
+// 			&event.EndTime,
+// 			&event.CreatedAt,
+// 			&event.UpdatedAt,
+// 		)
+
+// 		if err != nil {
+// 			rows.Close()
+// 			return nil, pkg.ParseError(err)
+// 		}
+
+// 		event.Speakers = []SpeakerMDL{}
+// 		event.Categories = []string{}
+
+// 		events = append(events, event)
+// 		eventIDs = append(eventIDs, event.ID)
+// 	}
+
+// 	if err := rows.Err(); err != nil {
+// 		rows.Close()
+// 		return nil, pkg.ParseError(err)
+// 	}
+
+// 	rows.Close()
+
+// 	if len(eventIDs) == 0 {
+// 		return []EventsMDL{}, nil
+// 	}
+
+// 	// Get speakers
+// 	querySpeakers := `
+// 		SELECT
+// 			se.event_id,
+// 			s.name,
+// 			s.job,
+// 			s.office
+// 		FROM speakers_events se
+// 		JOIN speakers s
+// 			ON s.id = se.speaker_id
+// 		WHERE se.event_id = ANY($1)
+// 		ORDER BY se.event_id, s.name
+// 	`
+
+// 	speakerRows, err := er.db.Query(ctx, querySpeakers, eventIDs)
+// 	if err != nil {
+// 		return nil, pkg.ParseError(err)
+// 	}
+
+// 	speakersMap := make(map[int32][]model.SpeakerMDL)
+
+// 	for speakerRows.Next() {
+// 		var (
+// 			eventID int32
+// 			speaker model.SpeakerMDL
+// 		)
+
+// 		err := speakerRows.Scan(
+// 			&eventID,
+// 			&speaker.Name,
+// 			&speaker.Job,
+// 			&speaker.Office,
+// 		)
+
+// 		if err != nil {
+// 			speakerRows.Close()
+// 			return nil, pkg.ParseError(err)
+// 		}
+
+// 		speakersMap[eventID] = append(
+// 			speakersMap[eventID],
+// 			speaker,
+// 		)
+// 	}
+
+// 	if err := speakerRows.Err(); err != nil {
+// 		speakerRows.Close()
+// 		return nil, pkg.ParseError(err)
+// 	}
+
+// 	speakerRows.Close()
+
+// 	// Get categories
+// 	queryCategories := `
+// 		SELECT
+// 			ec.event_id,
+// 			c.name
+// 		FROM events_categories ec
+// 		JOIN categories c
+// 			ON c.id = ec.category_id
+// 		WHERE ec.event_id = ANY($1)
+// 		ORDER BY ec.event_id, c.name
+// 	`
+
+// 	categoryRows, err := er.db.Query(ctx, queryCategories, eventIDs)
+// 	if err != nil {
+// 		return nil, pkg.ParseError(err)
+// 	}
+
+// 	categoriesMap := make(map[int32][]string)
+
+// 	for categoryRows.Next() {
+// 		var (
+// 			eventID  int32
+// 			category string
+// 		)
+
+// 		err := categoryRows.Scan(
+// 			&eventID,
+// 			&category,
+// 		)
+
+// 		if err != nil {
+// 			categoryRows.Close()
+// 			return nil, pkg.ParseError(err)
+// 		}
+
+// 		categoriesMap[eventID] = append(
+// 			categoriesMap[eventID],
+// 			category,
+// 		)
+// 	}
+
+// 	if err := categoryRows.Err(); err != nil {
+// 		categoryRows.Close()
+// 		return nil, pkg.ParseError(err)
+// 	}
+
+// 	categoryRows.Close()
+
+// 	for i := range events {
+// 		if speakers, ok := speakersMap[events[i].ID]; ok {
+// 			events[i].Speakers = speakers
+// 		}
+
+// 		if categories, ok := categoriesMap[events[i].ID]; ok {
+// 			events[i].Categories = categories
+// 		}
+// 	}
+
+// 	return events, nil
+// }

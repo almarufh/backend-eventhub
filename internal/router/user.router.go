@@ -17,7 +17,9 @@ func (r *Router) userRouter() {
 	user := r.router.Group("user")
 	user.Use(r.middleware.AuthMiddleware)
 	{
-		user.GET("profiles", r.middleware.AuthMiddleware, uh.MyProfile)
+		user.GET("", r.middleware.AuthMiddleware, uh.MyProfile)
+		user.PATCH("", r.middleware.AuthMiddleware, uh.SetProfile)
+		user.PATCH("password", r.middleware.AuthMiddleware, uh.NewPassword)
 
 	}
 
@@ -30,11 +32,5 @@ func (r *Router) userRouter() {
 	community := user.Group("community")
 	{
 		community.GET("joined", r.middleware.AuthMiddleware, uh.JoinedCommunities)
-	}
-
-	set := user.Group("set")
-	{
-		set.PATCH("password", r.middleware.AuthMiddleware, uh.NewPassword)
-		set.PATCH("profiles", r.middleware.AuthMiddleware, uh.SetProfile)
 	}
 }

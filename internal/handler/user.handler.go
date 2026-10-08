@@ -33,7 +33,7 @@ func NewUserHandler(m *middleware.Middleware, us *service.UserService) *UserHand
 // @Accept			json
 // @Produce			json
 // @Security		Bearer
-// @Router			/user/set/password	[patch]
+// @Router			/user/password	[patch]
 // @Param			data	body 	dto.ReqNewPassword true "Body to Change Password"
 // @Success			200		{object}	dto.Response
 // @Failure			400		{object}	dto.ErrResponse
@@ -88,7 +88,7 @@ func (uh *UserHandler) NewPassword(ctx *gin.Context) {
 // @Tags            User
 // @Produce         json
 // @Security        Bearer
-// @Router          /user/profiles  [get]
+// @Router          /user  [get]
 // @Success         200     {object}    dto.Response
 // @Failure         401     {object}    dto.ErrResponse
 // @Failure         500     {object}    dto.ErrResponse
@@ -135,7 +135,7 @@ func (uh *UserHandler) MyProfile(ctx *gin.Context) {
 // @Param description formData string false "Description"    default(Senior Fullstack Developer)
 // @Param image       formData file   false "Profile Picture File"
 // @Security        Bearer
-// @Router          /user/set/profiles [patch]
+// @Router          /user [patch]
 // @Success         200     {object}    dto.Response{data=dto.ResSetProfile}
 // @Failure         400     {object}    dto.ErrResponse
 // @Failure         401     {object}    dto.ErrResponse

@@ -132,6 +132,14 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, msgerr.CapacityFulled) {
+			ctx.JSON(http.StatusUnprocessableEntity, dto.ErrResponse{
+				Success: false,
+				Message: err.Error(),
+			})
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Success: false,
 			Message: "Gagal bergabung dengan event",

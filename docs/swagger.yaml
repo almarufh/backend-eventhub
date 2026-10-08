@@ -83,7 +83,7 @@ definitions:
         example: true
         type: boolean
     type: object
-host: 172.17.0.1:2027
+host: 192.168.0.186:7202
 info:
   contact: {}
   description: This is a sample send request use API.
@@ -518,6 +518,93 @@ paths:
       summary: Unsave Event
       tags:
       - Events
+  /user:
+    get:
+      description: for get detail information profiles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrResponse'
+      security:
+      - Bearer: []
+      summary: Get Profiles
+      tags:
+      - User
+    patch:
+      consumes:
+      - multipart/form-data
+      description: 'Update user profile information and upload a profile picture (max
+        2MB, formats: jpg/jpeg/png)'
+      parameters:
+      - default: Alma'ruf Hidayat
+        description: User Full Name
+        in: formData
+        name: name
+        type: string
+      - default: Masamba, Luwu Utara, Sulawesi Selatan
+        description: User Address
+        in: formData
+        name: address
+        type: string
+      - default: Fullstack Developer
+        description: User Job Title
+        in: formData
+        name: job
+        type: string
+      - default: PT. Best Life Ummah
+        description: User Office
+        in: formData
+        name: office
+        type: string
+      - default: Senior Fullstack Developer
+        description: Description
+        in: formData
+        name: description
+        type: string
+      - description: Profile Picture File
+        in: formData
+        name: image
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ResSetProfile'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrResponse'
+      security:
+      - Bearer: []
+      summary: Update Profile
+      tags:
+      - User
   /user/community/joined:
     get:
       description: for get list of events joined by the authenticated user
@@ -587,30 +674,7 @@ paths:
       summary: Get Saved Events
       tags:
       - User
-  /user/profiles:
-    get:
-      description: for get detail information profiles
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.ErrResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrResponse'
-      security:
-      - Bearer: []
-      summary: Get Profiles
-      tags:
-      - User
-  /user/set/password:
+  /user/password:
     patch:
       consumes:
       - application/json
@@ -644,71 +708,6 @@ paths:
       security:
       - Bearer: []
       summary: Change Password
-      tags:
-      - User
-  /user/set/profiles:
-    patch:
-      consumes:
-      - multipart/form-data
-      description: 'Update user profile information and upload a profile picture (max
-        2MB, formats: jpg/jpeg/png)'
-      parameters:
-      - default: Alma'ruf Hidayat
-        description: User Full Name
-        in: formData
-        name: name
-        type: string
-      - default: Masamba, Luwu Utara, Sulawesi Selatan
-        description: User Address
-        in: formData
-        name: address
-        type: string
-      - default: Fullstack Developer
-        description: User Job Title
-        in: formData
-        name: job
-        type: string
-      - default: PT. Best Life Ummah
-        description: User Office
-        in: formData
-        name: office
-        type: string
-      - default: Senior Fullstack Developer
-        description: Description
-        in: formData
-        name: description
-        type: string
-      - description: Profile Picture File
-        in: formData
-        name: image
-        type: file
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.ResSetProfile'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.ErrResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.ErrResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/dto.ErrResponse'
-      security:
-      - Bearer: []
-      summary: Update Profile
       tags:
       - User
 securityDefinitions:

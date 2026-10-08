@@ -113,6 +113,8 @@ func (ah *AuthHandler) Register(ctx *gin.Context) {
 // @Success			200		{object}	dto.Response
 // @Failure			400		{object}	dto.ErrResponse
 func (ah *AuthHandler) Login(ctx *gin.Context) {
+	origin := ctx.GetHeader("Origin")
+	log.Printf("Origin Auth : %s\n\n", origin)
 	var body dto.ReqLogin
 	if err := ctx.ShouldBindWith(&body, binding.JSON); err != nil {
 		log.Printf("[AuthHandler.Login] Bind error: %v\n", err.Error())

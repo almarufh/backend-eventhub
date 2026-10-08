@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"backend/EventHub/internal/dto"
+	msgerr "backend/EventHub/internal/message"
 	"backend/EventHub/internal/repo"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -85,7 +85,7 @@ func (es *EventsService) JoinEventService(ctx context.Context, ID int32, eventID
 	}
 
 	if event.Attendee == event.Capacity {
-		return fmt.Errorf("Event full capacity %d/%d", event.Attendee, event.Capacity)
+		return msgerr.CapacityFulled
 	}
 
 	auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
@@ -118,3 +118,11 @@ func (es *EventsService) UnsaveEventService(ctx context.Context, ID int32, event
 	}
 	return es.er.UnsaveEventRepo(ctx, auth.User_id, eventID)
 }
+
+// func (es *EventsService) GetAllEventService(ctx context.Context, ID int32, eventID int32) error {
+// 	auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return es.er.GetAllEventsRepo(ctx, auth.User_id, eventID)
+// }

@@ -2,8 +2,6 @@ package router
 
 import (
 	"backend/EventHub/internal/middleware"
-	"fmt"
-	"os"
 
 	_ "backend/EventHub/docs"
 
@@ -39,7 +37,7 @@ func (r *Router) Connect() {
 	go func() {
 		swaggerServer := gin.Default()
 		swaggerServer.GET("/docs/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-		swaggerServer.Run(fmt.Sprintf("%s:2029", os.Getenv("HOST")))
+		swaggerServer.Run(":2029")
 	}()
 
 	r.staticRouter()

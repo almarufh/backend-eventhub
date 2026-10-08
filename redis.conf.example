@@ -1,0 +1,66 @@
+# --- NETWORK SETTINGS ---
+bind 0.0.0.0
+port 6379
+
+# Protected mode diaktifkan
+protected-mode yes
+
+# (idle)
+timeout 300
+
+# Mengirim paket TCP ACK setiap 300 detik untuk mendeteksi koneksi terputus
+tcp-keepalive 300
+
+
+# --- 2. GENERAL & ENVIRONMENT ---
+daemonize no
+
+# --- LOGGING ---
+loglevel notice
+# loglevel debug
+# loglevel verbose
+# loglevel warning
+logfile ""
+# logfile "/var/log/redis/redis-server.log"
+
+
+# --- MEMORY MANAGEMENT ---
+maxmemory 200mb
+
+# Kebijakan penghapusan data saat memori penuh
+maxmemory-policy allkeys-lru
+# maxmemory-policy noeviction
+# maxmemory-policy allkeys-lfu
+# maxmemory-policy allkeys-random
+# maxmemory-policy volatile-lfu
+# maxmemory-policy volatile-lru
+# maxmemory-policy volatile-random
+
+# ---  USER MANAGEMENT & SECURITY (ACL) ---
+user default off
+# user default on >Sudo@1234 ~* +@all
+
+# User khusus ACL
+user admin on >Admin1234 ~* +@all
+user user on >User1234 ~* -@all +@read
+
+
+# ---  PERSISTENCE (RDB - SNAPSHOT) ---
+# Jadwal otomatis pembuatan snapshot RDB ke disk
+save 900 1
+save 300 10
+save 60 10000
+
+# Nama file snapshot RDB
+dbfilename dump.rdb
+
+# Mengompresi file RDB menggunakan LZF (ringan & menghemat ruang disk)
+rdbcompression yes
+
+
+# --- PERSISTENCE (AOF - APPEND ONLY FILE) ---
+appendonly yes
+appendfilename "appendonly.aof"
+
+# Menentukan lokasi direktori penyimpanan file data (RDB & AOF)
+dir /data

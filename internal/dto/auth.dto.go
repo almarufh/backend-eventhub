@@ -24,6 +24,7 @@ type ReqLogin struct {
 type ResLogin struct {
 	Token          string  `json:"token"`
 	Name           string  `json:"name"`
+	Email          string  `json:"email"`
 	Role           string  `json:"role"`
 	DarkPreference bool    `json:"dark_preference"`
 	Image          *string `json:"image"`

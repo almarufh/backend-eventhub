@@ -9,7 +9,7 @@ type ReqNewPassword struct {
 }
 
 type ResMyProfle struct {
-	ID             int32   `json:"user_id"`
+	ID             int32   `json:"-"`
 	Email          string  `json:"email"`
 	Name           string  `json:"name"`
 	Role           string  `json:"role"`
