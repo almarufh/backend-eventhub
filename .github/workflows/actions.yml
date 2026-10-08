@@ -1,0 +1,17 @@
+name: Create Backend EventHub API v1.0.0
+on:
+  push:
+    branches: -master
+jobs:
+  get-source-code:
+    name: Get Source Code From
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source code from repository
+        uses: actions/checkout@v7
+
+      - name: Cek list file in directory
+        run: ls -la
+
+      - name: Install dependencies
+        run: go mod download
