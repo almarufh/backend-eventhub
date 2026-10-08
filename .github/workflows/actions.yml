@@ -1,8 +1,8 @@
 name: Create Backend EventHub API v1.0.0
 on:
   push:
-    branches:
-      - master
+    tags:
+      - v*
 jobs:
   get-source-code:
     name: Get Source Code From
@@ -30,4 +30,4 @@ jobs:
           echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: push app to ghcr
-        run: docker push ghcr.io/${{github.actor}}/EventHub:latest
+        run: docker push ghcr.io/${{github.repository}}:latest
