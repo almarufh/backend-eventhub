@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - v*
+      - master
 jobs:
   get-source-code:
     name: Get Source Code From
@@ -20,7 +21,7 @@ jobs:
         run: go mod download
 
       - name: Build golang app
-        run: CGO_ENABLED=0 go build -o backend ./cmd/main.go
+        run: CGO_ENABLED=0 go build -o ghcr.io/${{github.repository}}:latest ./cmd/main.go
 
       - name: Cek list file in directory
         run: ls -la
