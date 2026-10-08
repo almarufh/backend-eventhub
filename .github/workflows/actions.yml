@@ -18,3 +18,9 @@ jobs:
 
       - name: Install dependencies
         run: go mod download
+
+      - name: Build golang app
+        run: CGO_ENABLED=0 go build -o backend ./cmd/main.go
+
+      - name: Run aplictions
+        run: ./backend
