@@ -1,0 +1,33 @@
+name: Create Backend EventHub API v1.0.0
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  get-source-code:
+    name: Get Source Code From
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Print teks
+        run: echo "i am ${{ github.actor }}"
+      - name: Checkout source code from repository
+        uses: actions/checkout@v7
+
+      - name: Cek list file in directory
+        run: ls -la
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build golang app
+        run: CGO_ENABLED=0 go build -o backend ./cmd/main.go
+
+      - name: Cek list file in directory
+        run: ls -la
+
+      - name: login to ghcr
+        run: |
+          echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
+
+      - name: push app to ghcr
+        run: docker push ghcr.io/${{github.repository}}:latest
