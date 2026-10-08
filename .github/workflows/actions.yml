@@ -2,11 +2,14 @@ name: Create Backend EventHub API v1.0.0
 on:
   push:
     branches: -master
+      -main
 jobs:
   get-source-code:
     name: Get Source Code From
     runs-on: ubuntu-22.04
     steps:
+      - name: Print teks
+        run: echo "i am ${{ github.actor }}"
       - name: Checkout source code from repository
         uses: actions/checkout@v7
 
