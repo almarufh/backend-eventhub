@@ -1,8 +1,8 @@
 name: Create Backend EventHub API v1.0.0
 on:
   push:
-    branches: -master
-      -main
+    branches:
+      - master
 jobs:
   get-source-code:
     name: Get Source Code From
