@@ -54,6 +54,7 @@ jobs:
           FROM alpine:3.24.2
           WORKDIR /server
           COPY ./image/backend /server/backend
+          RUN chmod +x /server/backend
           CMD [ "/server/backend" ]
           KEREN
       - name: Build image
