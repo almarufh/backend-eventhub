@@ -6,30 +6,52 @@ on:
     branches:
       - master
 jobs:
-  get-source-code:
-    name: Get Source Code From
+  build-binary:
+    name: Build App
     runs-on: ubuntu-22.04
+    outputs:
+      output1: ${{ steps.binary.outputs.artifact-id }}
     steps:
-      - name: Print teks
-        run: echo "i am ${{ github.actor }}"
       - name: Checkout source code from repository
         uses: actions/checkout@v7
-
-      - name: Cek list file in directory
-        run: ls -la
 
       - name: Install dependencies
         run: go mod download
 
       - name: Build golang app
-        run: CGO_ENABLED=0 go build -o ghcr.io/${{github.repository}}:latest ./cmd/main.go
+        run: CGO_ENABLED=0 go build -o backend ./cmd/main.go
 
       - name: Cek list file in directory
         run: ls -la
 
-      - name: login to ghcr
-        run: |
-          echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
+      - name: Upload binary
+        uses: actions/upload-artifact@v7
+        id: binary
+        with:
+          name: backend-eventhub
+          path: backend
 
-      - name: push app to ghcr
-        run: docker push ghcr.io/${{github.repository}}:latest
+  build-image:
+    name: Build image
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@v8
+        with:
+          name: backend-eventhub
+          path: image
+
+      - name: Create docker image
+        run: |
+          cat << 'KEREN' > Dockerfile
+          FROM alpine:3.24.2
+          WORKDIR /server
+          COPY ./image/backend /server/backend
+          CMD [ "/server/backend" ]
+          KEREN
+      - name: Build image
+        run: docker build -t ghcr.io/${{github.repository}}:latest .
+      - name: Login to ghcr.io
+        run: echo -n ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io --username ${{github.actor}} --password-stdin
+      - name: Push image to ghcr
+        run: docker push ghcr.io/$${{github.repository}}:latest
