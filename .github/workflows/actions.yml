@@ -42,6 +42,9 @@ jobs:
           name: backend-eventhub
           path: image
 
+      - name: Cek isi folder image (debugging)
+        run: ls -la image/
+
       - name: Create docker image
         run: |
           cat << 'KEREN' > Dockerfile
