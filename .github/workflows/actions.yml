@@ -55,4 +55,4 @@ jobs:
       - name: Login to ghcr.io
         run: echo -n ${{secrets.GITHUB_TOKEN}} | docker login ghcr.io --username ${{github.actor}} --password-stdin
       - name: Push image to ghcr
-        run: docker push ghcr.io/$${{github.repository}}:latest
+        run: docker push ghcr.io/${{github.repository}}:latest
