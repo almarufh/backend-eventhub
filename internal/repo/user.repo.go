@@ -28,11 +28,11 @@ func (ur *UserRepo) SetProfiles(ctx context.Context, ID int32, imageUrl string, 
         UPDATE profiles
         SET 
             name = COALESCE(NULLIF($1, ''), name),
-            address = COALESCE($2, address),
-            job = COALESCE($3, job),
-            office = COALESCE($4, office),
-            image = COALESCE($5, image),
-            description = COALESCE($6, description),
+            address = COALESCE(NULLIF($2, ''), address),
+            job = COALESCE(NULLIF($3, ''), job),
+            office = COALESCE(NULLIF($4, ''), office),
+            image = COALESCE(NULLIF($5, ''), image),
+            description = COALESCE(NULLIF($6, ''), description),
             updated_at = CURRENT_TIMESTAMP
         WHERE user_id = $7
         RETURNING 
