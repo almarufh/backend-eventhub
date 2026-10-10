@@ -10,8 +10,6 @@ import (
 )
 
 func (m *Middleware) AuthMiddleware(c *gin.Context) {
-	log.Println("Request from : ", c.ClientIP())
-
 	payload, err := m.GetPayload(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, dto.Response{

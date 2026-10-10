@@ -10,10 +10,14 @@ import (
 )
 
 func (m *Middleware) Origin(c *gin.Context) {
-	origin := c.GetHeader("Origin")
-	log.Printf("Origin Request : \n\n%s\n\n", origin)
+	client, _ := m.GetClientInfo(c)
 
-	if origin == "" {
+	log.Println("Request Accepted from : ")
+	fmt.Println("    IP         : ", client.IP)
+	fmt.Println("    Origin     : ", client.Origin)
+	fmt.Println("    User Agent : ", client.UserAgent)
+
+	if client.Origin == "" {
 		// c.Next()
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"status":  false,
@@ -22,10 +26,10 @@ func (m *Middleware) Origin(c *gin.Context) {
 		return
 	}
 
-	if !slices.Contains(m.allowedOrigins, origin) {
+	if !slices.Contains(m.allowedOrigins, client.Origin) {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"status":  false,
-			"message": fmt.Sprintf("request %s not allowed", origin),
+			"message": fmt.Sprintf("request %s not allowed", client.Origin),
 		})
 		return
 	}

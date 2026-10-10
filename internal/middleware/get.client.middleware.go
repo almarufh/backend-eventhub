@@ -10,6 +10,7 @@ import (
 type ClientInfo struct {
 	IP        string
 	UserAgent string
+	Origin    string
 }
 
 func (m *Middleware) GetClientInfo(c *gin.Context) (*ClientInfo, error) {
@@ -23,8 +24,11 @@ func (m *Middleware) GetClientInfo(c *gin.Context) (*ClientInfo, error) {
 		userAgent = "Unknown Device"
 	}
 
+	origin := c.GetHeader("Origin")
+
 	return &ClientInfo{
 		IP:        ip,
 		UserAgent: userAgent,
+		Origin:    origin,
 	}, nil
 }

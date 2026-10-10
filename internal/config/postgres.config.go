@@ -37,6 +37,6 @@ func (p *Postgres) Connect() *pgxpool.Pool {
 		log.Printf("Database tidak merespon: %v", err)
 	}
 
-	log.Printf("Connected PostgreSQL successfully")
+	log.Printf(" PONG ! Connected PostgreSQL successfully")
 	return pool
 }
