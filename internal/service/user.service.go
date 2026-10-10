@@ -208,9 +208,8 @@ func (us *UserService) SetProfileService(ctx context.Context, ID int32, body dto
 	}
 
 	if profile.Image != nil && *profile.Image != "" {
-		host := os.Getenv("HOST")
-		port := os.Getenv("PORT")
-		imageUrl := fmt.Sprintf("http://%s:%s/public/images/profile/%s", host, port, *profile.Image)
+		host := os.Getenv("HOST_STATIC")
+		imageUrl := fmt.Sprintf("http://%s/public/images/profile/%s", host, *profile.Image)
 		profile.Image = &imageUrl
 	}
 
