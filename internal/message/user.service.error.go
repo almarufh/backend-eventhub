@@ -13,4 +13,5 @@ var (
 	SavedEventsUserNotFound = errors.New("data events disimpan user tidak ditemukan berdasarkan ID otentikasi")
 	JoinedEventsNotFound    = errors.New("data events joined user tidak ditemukan berdasarkan ID otentikasi")
 	UpdateProfile           = errors.New("gagal memperbarui data profil di database")
+	ChangePassword          = errors.New("wrong password or email")
 )

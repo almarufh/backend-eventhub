@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	msgerr "backend/EventHub/internal/message"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
@@ -123,7 +124,7 @@ func (c *ConfigHash) Compare(password string, hash string) (string, error) {
 	newkey := argon2.IDKey([]byte(password), salt, c.time, c.memory, c.parallelism, c.keyLength)
 
 	if subtle.ConstantTimeCompare(key, newkey) == 0 {
-		return "", errors.New("wrong password or email")
+		return "", msgerr.ChangePassword
 	}
 	return c.CompleteHash(newkey, salt), nil
 }

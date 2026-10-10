@@ -68,6 +68,12 @@ func (uh *UserHandler) NewPassword(ctx *gin.Context) {
 	if err != nil {
 		log.Printf("[UserHandler.Logout] Service error: %s\n", err.Error())
 
+		if errors.Is(err, msgerr.ChangePassword) {
+			ctx.JSON(http.StatusInternalServerError, dto.ErrResponse{
+				Success: false,
+				Message: "Wrong password !",
+			})
+		}
 		ctx.JSON(http.StatusInternalServerError, dto.ErrResponse{
 			Success: false,
 			Message: err.Error(),
