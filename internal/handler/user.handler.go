@@ -73,6 +73,7 @@ func (uh *UserHandler) NewPassword(ctx *gin.Context) {
 				Success: false,
 				Message: "Wrong password !",
 			})
+			return
 		}
 		ctx.JSON(http.StatusInternalServerError, dto.ErrResponse{
 			Success: false,
