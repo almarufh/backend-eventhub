@@ -120,9 +120,8 @@ func (us *UserService) MyProfile(ctx context.Context, ID int32) (*dto.ResMyProfl
 	}
 
 	if user.Image != nil && *user.Image != "" {
-		host := os.Getenv("HOST")
-		port := os.Getenv("PORT")
-		imageUrl := fmt.Sprintf("http://%s:%s/public/images/profile/%s", host, port, *user.Image)
+		host := os.Getenv("HOST_STATIC")
+		imageUrl := fmt.Sprintf("http://%s/public/images/profile/%s", host, *user.Image)
 		user.Image = &imageUrl
 	}
 
