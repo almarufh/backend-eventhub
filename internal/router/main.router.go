@@ -31,6 +31,7 @@ func NewRouter(router *gin.Engine, pool *pgxpool.Pool, middleware *middleware.Mi
 func (r *Router) Connect() {
 
 	r.statusServer()
+	r.staticRouter()
 	r.router.Use(r.middleware.Origin, r.middleware.Cors)
 	r.router.GET("/docs/v1/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -40,7 +41,6 @@ func (r *Router) Connect() {
 		swaggerServer.Run(":2029")
 	}()
 
-	r.staticRouter()
 	r.authRouter()
 	r.userRouter()
 	r.communitieRouter()
