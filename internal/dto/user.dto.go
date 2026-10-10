@@ -1,6 +1,9 @@
 package dto
 
-import "mime/multipart"
+import (
+	"mime/multipart"
+	"time"
+)
 
 type ReqNewPassword struct {
 	ID           int32  `json:"-"`
@@ -9,16 +12,17 @@ type ReqNewPassword struct {
 }
 
 type ResMyProfle struct {
-	ID             int32   `json:"-"`
-	Email          string  `json:"email"`
-	Name           string  `json:"name"`
-	Role           string  `json:"role"`
-	DarkPreference bool    `json:"dark_preference"`
-	Address        *string `json:"address"`
-	Job            *string `json:"job"`
-	Office         *string `json:"office"`
-	Image          *string `json:"image"`
-	Description    *string `json:"description"`
+	ID             int32     `json:"-"`
+	Email          string    `json:"email"`
+	Name           string    `json:"name"`
+	Role           string    `json:"role"`
+	DarkPreference bool      `json:"dark_preference"`
+	Address        *string   `json:"address"`
+	Job            *string   `json:"job"`
+	Office         *string   `json:"office"`
+	Image          *string   `json:"image"`
+	Description    *string   `json:"description"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 type ReqSetProfile struct {
@@ -31,12 +35,13 @@ type ReqSetProfile struct {
 }
 
 type ResSetProfile struct {
-	Name        *string `form:"name"`
-	Address     *string `form:"address"`
-	Job         *string `form:"job"`
-	Office      *string `form:"office"`
-	Image       *string `form:"image"`
-	Description *string `form:"description"`
+	Name        *string   `json:"name"`
+	Address     *string   `json:"address"`
+	Job         *string   `json:"job"`
+	Office      *string   `json:"office"`
+	Image       *string   `json:"image"`
+	Description *string   `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type ResJoinedEvents struct {

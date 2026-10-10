@@ -3,12 +3,13 @@ package model
 import "time"
 
 type ProfileMDL struct {
-	Name        *string `db:"name"`
-	Address     *string `db:"address"`
-	Job         *string `db:"job"`
-	Office      *string `db:"office"`
-	Image       *string `db:"image"`
-	Description *string `db:"description"`
+	Name        *string   `db:"name"`
+	Address     *string   `db:"address"`
+	Job         *string   `db:"job"`
+	Office      *string   `db:"office"`
+	Image       *string   `db:"image"`
+	Description *string   `db:"description"`
+	CreatedAt   time.Time `db:"created_at"`
 }
 
 type UsersDB struct {

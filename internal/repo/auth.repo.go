@@ -169,7 +169,8 @@ func (u *AuthRepo) GetUserById(ctx context.Context, db DbConn, id int32) (*model
 		    p.job,
 		    p.office,
 		    p.image,
-		    p.description
+		    p.description,
+			p.updated_at
 		FROM users u
 		JOIN profiles p ON u.id = p.user_id
 		WHERE u.id = $1;
@@ -187,6 +188,7 @@ func (u *AuthRepo) GetUserById(ctx context.Context, db DbConn, id int32) (*model
 		&user.Office,
 		&user.Image,
 		&user.Description,
+		&user.CreatedAt,
 	)
 
 	if err != nil {

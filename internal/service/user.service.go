@@ -106,6 +106,7 @@ func (us *UserService) MyProfile(ctx context.Context, ID int32) (*dto.ResMyProfl
 				Office:         user_redis.Office,
 				Image:          user_redis.Image,
 				Description:    user_redis.Description,
+				CreatedAt:      user_redis.CreatedAt,
 			}, nil
 		}
 	} else {
@@ -143,6 +144,7 @@ func (us *UserService) MyProfile(ctx context.Context, ID int32) (*dto.ResMyProfl
 		Office:         user.Office,
 		Image:          user.Image,
 		Description:    user.Description,
+		CreatedAt:      user.CreatedAt,
 	}, nil
 }
 
@@ -243,6 +245,7 @@ func (us *UserService) SetProfileService(ctx context.Context, ID int32, body dto
 		Office:      profile.Office,
 		Image:       profile.Image,
 		Description: profile.Description,
+		CreatedAt:   profile.CreatedAt,
 	}, nil
 }
 

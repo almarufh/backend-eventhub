@@ -41,7 +41,8 @@ func (ur *UserRepo) SetProfiles(ctx context.Context, ID int32, imageUrl string, 
             job, 
             office, 
             image, 
-            description
+            description,
+			created_at
     `
 	args := []any{
 		body.Name,
@@ -64,6 +65,7 @@ func (ur *UserRepo) SetProfiles(ctx context.Context, ID int32, imageUrl string, 
 		&profile.Office,
 		&profile.Image,
 		&profile.Description,
+		&profile.CreatedAt,
 	)
 
 	if err != nil {
