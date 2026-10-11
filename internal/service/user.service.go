@@ -94,7 +94,6 @@ func (us *UserService) MyProfile(ctx context.Context, ID int32) (*dto.ResMyProfl
 		if err := json.Unmarshal([]byte(res), &user_redis); err != nil {
 			log.Printf("Error 222 : %s", err.Error())
 		} else {
-			log.Println("Data from redis", user_redis)
 			return &dto.ResMyProfle{
 				ID:             user_redis.ID,
 				Email:          user_redis.Email,
@@ -109,9 +108,6 @@ func (us *UserService) MyProfile(ctx context.Context, ID int32) (*dto.ResMyProfl
 				CreatedAt:      user_redis.CreatedAt,
 			}, nil
 		}
-	} else {
-		log.Printf("Redis get %s service myProfile : %s", key, err)
-
 	}
 
 	user, err := us.ar.GetUserById(ctx, us.db, auth.User_id)

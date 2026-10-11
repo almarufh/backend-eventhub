@@ -143,4 +143,4 @@ This project is licensed under the MIT License
 
 ## Related Project
 
-[![WhatsApp](https://img.shields.io/badge/FRONTEND--blue?logo=googlechrome&logoColor=blue)](https://github.com/almarufh)
+[![WhatsApp](https://img.shields.io/badge/FRONTEND--blue?logo=googlechrome&logoColor=blue)](https://github.com/almarufh/frontend-eventhub)
