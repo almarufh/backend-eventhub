@@ -15,16 +15,16 @@ func (m *Middleware) Origin(c *gin.Context) {
 	log.Println("Request Accepted from : ")
 	fmt.Println("    IP         : ", client.IP)
 	fmt.Println("    Origin     : ", client.Origin)
-	fmt.Println("    User Agent : ", client.UserAgent)
+	fmt.Printf("    User Agent : %s\n\n", client.UserAgent)
 
-	if client.Origin == "" {
-		// c.Next()
-		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-			"status":  false,
-			"message": "request must have origin allowed",
-		})
-		return
-	}
+	// if client.Origin == "" {
+	// 	// c.Next()
+	// 	c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+	// 		"status":  false,
+	// 		"message": "request must have origin allowed",
+	// 	})
+	// 	return
+	// }
 
 	if !slices.Contains(m.allowedOrigins, client.Origin) {
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
