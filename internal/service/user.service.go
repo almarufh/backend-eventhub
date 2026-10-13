@@ -282,6 +282,13 @@ func (us *UserService) JoinedEvents(ctx context.Context, ID int32) (dto.ResJoine
 		if err != nil {
 			return dto.ResJoinedEvents{}, err
 		}
+
+		status := false
+
+		if value := us.er.GetStatusSaved(ctx, auth.User_id, e.ID); value == 1 {
+			status = true
+		}
+
 		res = append(res, dto.ResDetailEvent{
 			ID:        e.ID,
 			Community: e.Community,
@@ -301,6 +308,8 @@ func (us *UserService) JoinedEvents(ctx context.Context, ID int32) (dto.ResJoine
 			Capacity:    e.Capacity,
 			StartTime:   e.StartTime,
 			EndTime:     e.EndTime,
+			Joined:      true,
+			Saved:       status,
 		})
 	}
 
@@ -349,10 +358,22 @@ func (us *UserService) SavedEvents(ctx context.Context, ID int32) (dto.ResSavedE
 			})
 		}
 
+		attendee, err := us.er.GetAttende(ctx, e.ID)
+		if err != nil {
+			return dto.ResSavedEvents{}, err
+		}
+
 		categories, err := us.er.GetCategoryEvents(ctx, e.Organizer.ID)
 		if err != nil {
 			return dto.ResSavedEvents{}, err
 		}
+
+		status := false
+
+		if value := us.er.GetStatusJoined(ctx, auth.User_id, e.ID); value == 1 {
+			status = true
+		}
+
 		res = append(res, dto.ResDetailEvent{
 			ID:        e.ID,
 			Community: e.Community,
@@ -364,7 +385,7 @@ func (us *UserService) SavedEvents(ctx context.Context, ID int32) (dto.ResSavedE
 			},
 			Speakers:    speakersDTO,
 			Categorys:   categories,
-			Attendee:    e.Attendee,
+			Attendee:    attendee,
 			Title:       e.Title,
 			Location:    e.Location,
 			Description: e.Description,
@@ -372,6 +393,8 @@ func (us *UserService) SavedEvents(ctx context.Context, ID int32) (dto.ResSavedE
 			Capacity:    e.Capacity,
 			StartTime:   e.StartTime,
 			EndTime:     e.EndTime,
+			Joined:      status,
+			Saved:       true,
 		})
 	}
 
@@ -409,6 +432,7 @@ func (us *UserService) JoinedCommunities(ctx context.Context, ID int32) (dto.Res
 			Status:      e.Status,
 			Categories:  e.Categories,
 			Members:     e.Members,
+			Joined:      true,
 		})
 	}
 

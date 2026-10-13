@@ -17,6 +17,7 @@ type ResDetailCommunitiy struct {
 	Image       string   `json:"image"`
 	Status      string   `json:"status"`
 	Categories  []string `json:"categories"`
+	Joined      bool     `json:"joined"`
 	Members     int32    `json:"members"`
 }
 

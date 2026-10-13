@@ -162,6 +162,8 @@ func (as *AuthService) ChangePassword(ctx context.Context, body dto.ReqChangePas
 	body.ID = user.ID
 	body.Password = pwd
 
+	fmt.Printf("\n\nbody.Password\n\n")
+
 	err = as.ar.ChangePassword(ctx, tx, body.Password, body.ID)
 	if err != nil {
 		return err

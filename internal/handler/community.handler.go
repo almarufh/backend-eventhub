@@ -144,6 +144,12 @@ func (ch *CommunityHandler) LeaveCommunity(ctx *gin.Context) {
 // @Failure         400     {object}    dto.ErrResponse
 // @Failure         500     {object}    dto.ErrResponse
 func (ch *CommunityHandler) GetDetailCommunity(ctx *gin.Context) {
+	var id int32 = 0
+	payload, err := ch.middleware.GetPayload(ctx)
+	if err == nil {
+		id = payload.ID
+	}
+
 	param, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		log.Printf("[CommunityHandler.GetDetailCommunity] Atoi: %s\n", err.Error())
@@ -154,7 +160,7 @@ func (ch *CommunityHandler) GetDetailCommunity(ctx *gin.Context) {
 		return
 	}
 
-	communitiy, err := ch.cs.DetailCommunity(ctx.Request.Context(), int32(param))
+	communitiy, err := ch.cs.DetailCommunity(ctx.Request.Context(), id, int32(param))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, dto.ErrResponse{
 			Success: false,

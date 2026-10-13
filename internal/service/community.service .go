@@ -41,7 +41,19 @@ func (cs *CommunitieService) ToggleJoinCommunity(ctx context.Context, param int3
 	}, nil
 }
 
-func (cs *CommunitieService) DetailCommunity(ctx context.Context, param int32) (*dto.ResDetailCommunitiy, error) {
+func (cs *CommunitieService) DetailCommunity(ctx context.Context, ID int32, param int32) (*dto.ResDetailCommunitiy, error) {
+	status := false
+
+	if ID != 0 {
+		auth, err := cs.ar.GetAuthUser(ctx, cs.db, ID)
+		if err == nil {
+			if value := cs.cr.GetStatusCommunityJoined(ctx, auth.User_id, param); value == 1 {
+				status = true
+			}
+
+		}
+	}
+
 	communitie, err := cs.cr.GetDetailCommunity(ctx, param)
 	if err != nil {
 		return nil, err
@@ -55,6 +67,7 @@ func (cs *CommunitieService) DetailCommunity(ctx context.Context, param int32) (
 		Status:      communitie.Status,
 		Categories:  communitie.Categories,
 		Members:     communitie.Members,
+		Joined:      status,
 	}, err
 }
 

@@ -6,6 +6,7 @@ import (
 	"backend/EventHub/pkg"
 	"context"
 	"errors"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -209,6 +210,48 @@ func (er *EventsRepo) UnsaveEventRepo(ctx context.Context, userID int32, eventID
 	}
 
 	return nil
+}
+
+func (er *EventsRepo) GetAttende(ctx context.Context, eventID int32) (attendee int32, err error) {
+	query := `
+		SELECT COUNT(*)
+		FROM joined_events_users j
+		WHERE j.event_id = $1;
+	`
+	err = er.db.QueryRow(ctx, query, eventID).Scan(&attendee)
+	if err != nil {
+		log.Printf("[EventsRepo.GetAttende] QueryRow : %v", err)
+		return 0, err
+	}
+	return attendee, nil
+}
+
+func (er *EventsRepo) GetStatusJoined(ctx context.Context, userID int32, eventID int32) (value int) {
+	query := `
+		SELECT COUNT(*)
+		FROM joined_events_users j
+		WHERE j.user_id = $1 AND j.event_id = $2;
+	`
+	err := er.db.QueryRow(ctx, query, userID, eventID).Scan(&value)
+	if err != nil {
+		log.Printf("[EventsRepo.GetAttende] QueryRow : %v", err)
+		return 0
+	}
+	return value
+}
+
+func (er *EventsRepo) GetStatusSaved(ctx context.Context, userID int32, eventID int32) (value int) {
+	query := `
+		SELECT COUNT(*)
+		FROM saved_events_users j
+		WHERE j.user_id = $1 AND j.event_id = $2;
+	`
+	err := er.db.QueryRow(ctx, query, userID, eventID).Scan(&value)
+	if err != nil {
+		log.Printf("[EventsRepo.GetAttende] QueryRow : %v", err)
+		return 0
+	}
+	return value
 }
 
 // func (er *EventsRepo) GetAllEventsRepo(ctx context.Context, search string, categories []string, page int) ([]model.DetailEvenstMDL, error) {

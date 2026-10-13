@@ -38,6 +38,7 @@ func main() {
 	defer pool.Close()
 
 	// Gin Gonic
+	gin.SetMode(gin.ReleaseMode)
 	server := gin.Default()
 
 	middleware := middleware.InitMiddleWare(conf.ALLOWED_ORIGINS, pool, redis)

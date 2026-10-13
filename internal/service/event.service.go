@@ -24,7 +24,24 @@ func NewEventsService(er *repo.EventsRepo, ar *repo.AuthRepo, db *pgxpool.Pool) 
 	}
 }
 
-func (es *EventsService) GetDetailEvents(ctx context.Context, param int32) (dto.ResDetailEvent, error) {
+func (es *EventsService) GetDetailEvents(ctx context.Context, ID int32, param int32) (dto.ResDetailEvent, error) {
+
+	isJoin := false
+	isSave := false
+
+	if ID != 0 {
+		auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
+		if err == nil {
+			if value := es.er.GetStatusJoined(ctx, auth.User_id, param); value == 1 {
+				isJoin = true
+			}
+
+			if value := es.er.GetStatusSaved(ctx, auth.User_id, param); value == 1 {
+				isSave = true
+			}
+		}
+	}
+
 	event, err := es.er.GetDetailEvents(ctx, param)
 	if err != nil {
 		return dto.ResDetailEvent{}, err
@@ -73,26 +90,41 @@ func (es *EventsService) GetDetailEvents(ctx context.Context, param int32) (dto.
 		Capacity:    event.Capacity,
 		StartTime:   event.StartTime,
 		EndTime:     event.EndTime,
+		Joined:      isJoin,
+		Saved:       isSave,
 	}
 
 	return res, nil
 }
 
-func (es *EventsService) JoinEventService(ctx context.Context, ID int32, eventID int32) error {
+func (es *EventsService) JoinEventService(ctx context.Context, ID int32, eventID int32) (int32, error) {
 	event, err := es.er.GetDetailEvents(ctx, eventID)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if event.Attendee == event.Capacity {
-		return msgerr.CapacityFulled
+		return 0, msgerr.CapacityFulled
 	}
 
 	auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return es.er.JoinEventRepo(ctx, auth.User_id, eventID)
+
+	attendee, err := es.er.GetAttende(ctx, eventID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = es.er.JoinEventRepo(ctx, auth.User_id, eventID)
+	if err != nil {
+		return 0, err
+	}
+
+	attendee += 1
+
+	return attendee, nil
 }
 
 func (es *EventsService) SaveEventService(ctx context.Context, ID int32, eventID int32) error {
@@ -100,15 +132,26 @@ func (es *EventsService) SaveEventService(ctx context.Context, ID int32, eventID
 	if err != nil {
 		return err
 	}
+
 	return es.er.SaveEventRepo(ctx, auth.User_id, eventID)
 }
 
-func (es *EventsService) LeaveEventService(ctx context.Context, ID int32, eventID int32) error {
+func (es *EventsService) LeaveEventService(ctx context.Context, ID int32, eventID int32) (int32, error) {
 	auth, err := es.ar.GetAuthUser(ctx, es.db, ID)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return es.er.LeaveEventRepo(ctx, auth.User_id, eventID)
+	err = es.er.LeaveEventRepo(ctx, auth.User_id, eventID)
+	if err != nil {
+		return 0, err
+	}
+
+	attendee, err := es.er.GetAttende(ctx, eventID)
+	if err != nil {
+		return 0, err
+	}
+
+	return attendee, nil
 }
 
 func (es *EventsService) UnsaveEventService(ctx context.Context, ID int32, eventID int32) error {

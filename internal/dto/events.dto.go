@@ -26,7 +26,17 @@ type ResDetailEvent struct {
 	Location    string    `json:"location"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
+	Joined      bool      `json:"joined"`
+	Saved       bool      `json:"saved"`
 	Capacity    int32     `json:"capacity"`
 	StartTime   time.Time `json:"start_time"`
 	EndTime     time.Time `json:"end_time"`
+}
+
+type ResJoinEvent struct {
+	Attende int32 `json:"attendee"`
+}
+
+type ResLeaveEvent struct {
+	Attende int32 `json:"attendee"`
 }

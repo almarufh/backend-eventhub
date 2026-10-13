@@ -5,6 +5,7 @@ import (
 	"backend/EventHub/pkg"
 	"context"
 	"errors"
+	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,7 +20,7 @@ func NewCommunityRepo(db *pgxpool.Pool) *CommuntyRepo {
 	}
 }
 
-func (ur *CommuntyRepo) ToggleJoinCommunityRepo(ctx context.Context, ID int32, param int32) (model.JoinCommunityMDL, error) {
+func (cr *CommuntyRepo) ToggleJoinCommunityRepo(ctx context.Context, ID int32, param int32) (model.JoinCommunityMDL, error) {
 	query := `
 		WITH deleted AS (
 		    DELETE FROM communities_users 
@@ -45,7 +46,7 @@ func (ur *CommuntyRepo) ToggleJoinCommunityRepo(ctx context.Context, ID int32, p
     `
 	args := []any{ID, param}
 	var communities model.JoinCommunityMDL
-	err := ur.db.QueryRow(
+	err := cr.db.QueryRow(
 		ctx,
 		query,
 		args...,
@@ -66,7 +67,7 @@ func (ur *CommuntyRepo) ToggleJoinCommunityRepo(ctx context.Context, ID int32, p
 	return communities, nil
 }
 
-func (ur *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*model.DetailCommunitieMDL, error) {
+func (cr *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*model.DetailCommunitieMDL, error) {
 	query := `
 		SELECT
 		    c.id,
@@ -88,7 +89,7 @@ func (ur *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*mode
     `
 	var communities model.DetailCommunitieMDL
 	args := []any{ID}
-	if err := ur.db.QueryRow(ctx, query, args...).Scan(
+	if err := cr.db.QueryRow(ctx, query, args...).Scan(
 		&communities.ID,
 		&communities.Title,
 		&communities.Description,
@@ -106,7 +107,7 @@ func (ur *CommuntyRepo) GetDetailCommunity(ctx context.Context, ID int32) (*mode
 	return &communities, nil
 }
 
-func (ur *CommuntyRepo) GetMembersCommunity(ctx context.Context, ID int32) (*[]model.MembersCommunityMDL, error) {
+func (cr *CommuntyRepo) GetMembersCommunity(ctx context.Context, ID int32) (*[]model.MembersCommunityMDL, error) {
 	query := `
 		SELECT
 			p.name,
@@ -119,7 +120,7 @@ func (ur *CommuntyRepo) GetMembersCommunity(ctx context.Context, ID int32) (*[]m
     `
 	var membersCommunities []model.MembersCommunityMDL
 	args := []any{ID}
-	rows, err := ur.db.Query(ctx, query, args...)
+	rows, err := cr.db.Query(ctx, query, args...)
 	if err != nil {
 		parsedErr := pkg.ParseError(err)
 		if errors.Is(parsedErr, pkg.ErrNotFound) {
@@ -147,7 +148,7 @@ func (ur *CommuntyRepo) GetMembersCommunity(ctx context.Context, ID int32) (*[]m
 	return &membersCommunities, nil
 }
 
-func (er *EventsRepo) GetCategoryCommunity(ctx context.Context, eventID int32) ([]string, error) {
+func (cr *CommuntyRepo) GetCategoryCommunity(ctx context.Context, eventID int32) ([]string, error) {
 	query := `
         SELECT
 			c.name
@@ -156,7 +157,7 @@ func (er *EventsRepo) GetCategoryCommunity(ctx context.Context, eventID int32) (
 		WHERE cc.community_id = $1
 	`
 
-	rows, err := er.db.Query(ctx, query, eventID)
+	rows, err := cr.db.Query(ctx, query, eventID)
 	if err != nil {
 		return nil, pkg.ParseError(err)
 	}
@@ -179,4 +180,18 @@ func (er *EventsRepo) GetCategoryCommunity(ctx context.Context, eventID int32) (
 	}
 
 	return categories, nil
+}
+
+func (cr *CommuntyRepo) GetStatusCommunityJoined(ctx context.Context, userID int32, eventID int32) (value int) {
+	query := `
+		SELECT COUNT(*)
+		FROM communities_users cu
+		WHERE cu.user_id = $1 AND cu.community_id = $2;
+	`
+	err := cr.db.QueryRow(ctx, query, userID, eventID).Scan(&value)
+	if err != nil {
+		log.Printf("[EventsRepo.GetAttende] QueryRow : %v", err)
+		return 0
+	}
+	return value
 }

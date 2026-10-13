@@ -41,6 +41,12 @@ func NewEventsHandler(es *service.EventsService,
 // @Failure      500  {object}  dto.Response  "Internal server error"
 // @Router       /events/{id} [get]
 func (eh *EventsHandler) GetDetailEvents(ctx *gin.Context) {
+	var id int32 = 0
+	payload, err := eh.middleware.GetPayload(ctx)
+	if err == nil {
+		id = payload.ID
+	}
+
 	idParam := ctx.Param("id")
 	eventID, err := strconv.Atoi(idParam)
 	if err != nil || eventID <= 0 {
@@ -52,7 +58,7 @@ func (eh *EventsHandler) GetDetailEvents(ctx *gin.Context) {
 		return
 	}
 
-	res, err := eh.es.GetDetailEvents(ctx.Request.Context(), int32(eventID))
+	res, err := eh.es.GetDetailEvents(ctx.Request.Context(), id, int32(eventID))
 	if err != nil {
 		log.Printf("[EventsHandler.GetDetailEvents] Service error: %v\n", err.Error())
 
@@ -99,6 +105,7 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Success: false,
 			Message: "Unauthorized",
+			Data:    dto.ResJoinEvent{Attende: 0},
 		})
 		return
 	}
@@ -109,6 +116,7 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Success: false,
 			Message: "ID event tidak valid",
+			Data:    dto.ResJoinEvent{Attende: 0},
 		})
 		return
 	}
@@ -117,17 +125,20 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Success: false,
 			Message: fmt.Sprintf("%s cannot join event", payload.Role),
+			Data:    dto.ResJoinEvent{Attende: 0},
 		})
 		return
 	}
 
-	if err := eh.es.JoinEventService(ctx.Request.Context(), payload.ID, int32(eventID)); err != nil {
+	attendee, err := eh.es.JoinEventService(ctx.Request.Context(), payload.ID, int32(eventID))
+	if err != nil {
 		log.Printf("[EventsHandler.JoinEvent] Error: %v\n", err)
 
 		if errors.Is(err, msgerr.AlredyJoinedEvents) {
 			ctx.JSON(http.StatusNotFound, dto.Response{
 				Success: false,
 				Message: err.Error(),
+				Data:    dto.ResJoinEvent{Attende: attendee},
 			})
 			return
 		}
@@ -136,6 +147,7 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 			ctx.JSON(http.StatusUnprocessableEntity, dto.ErrResponse{
 				Success: false,
 				Message: err.Error(),
+				Data:    dto.ResJoinEvent{Attende: attendee},
 			})
 			return
 		}
@@ -143,6 +155,7 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Success: false,
 			Message: "Gagal bergabung dengan event",
+			Data:    dto.ResJoinEvent{Attende: attendee},
 		})
 		return
 	}
@@ -150,6 +163,7 @@ func (eh *EventsHandler) JoinEvent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.Response{
 		Success: true,
 		Message: "Berhasil bergabung dengan event",
+		Data:    dto.ResJoinEvent{Attende: attendee},
 	})
 }
 
@@ -241,6 +255,9 @@ func (eh *EventsHandler) LeaveEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, dto.Response{
 			Success: false,
 			Message: "Unauthorized",
+			Data: dto.ResLeaveEvent{
+				Attende: 0,
+			},
 		})
 		return
 	}
@@ -251,6 +268,9 @@ func (eh *EventsHandler) LeaveEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Success: false,
 			Message: "ID event tidak valid",
+			Data: dto.ResLeaveEvent{
+				Attende: 0,
+			},
 		})
 		return
 	}
@@ -259,17 +279,25 @@ func (eh *EventsHandler) LeaveEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, dto.Response{
 			Success: false,
 			Message: fmt.Sprintf("%s cannot join event", payload.Role),
+			Data: dto.ResLeaveEvent{
+				Attende: 0,
+			},
 		})
 		return
 	}
 
-	if err := eh.es.LeaveEventService(ctx.Request.Context(), payload.ID, int32(eventID)); err != nil {
+	attendee, err := eh.es.LeaveEventService(ctx.Request.Context(), payload.ID, int32(eventID))
+
+	if err != nil {
 		log.Printf("[EventsHandler.JoinEvent] Error: %v\n", err)
 
 		if errors.Is(err, msgerr.NotJoinedEvents) {
 			ctx.JSON(http.StatusNotFound, dto.Response{
 				Success: false,
 				Message: err.Error(),
+				Data: dto.ResLeaveEvent{
+					Attende: attendee,
+				},
 			})
 			return
 		}
@@ -277,6 +305,9 @@ func (eh *EventsHandler) LeaveEvent(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, dto.Response{
 			Success: false,
 			Message: err.Error(),
+			Data: dto.ResLeaveEvent{
+				Attende: attendee,
+			},
 		})
 		return
 	}
@@ -284,6 +315,9 @@ func (eh *EventsHandler) LeaveEvent(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, dto.Response{
 		Success: true,
 		Message: "Berhasil batal bergabung dengan event",
+		Data: dto.ResLeaveEvent{
+			Attende: attendee,
+		},
 	})
 }
 
@@ -352,4 +386,26 @@ func (eh *EventsHandler) UnsaveEvent(ctx *gin.Context) {
 		Success: true,
 		Message: "Berhasil menghapus event",
 	})
+}
+
+func (eh *EventsHandler) GetEvents(ctx *gin.Context) {
+	type ReqGetEvenys struct {
+		Limit int `from:"limit"`
+		Page  int `from:"page"`
+	}
+
+	type ResGetEvents struct {
+		CurrentPage int
+		TotalPage   int
+		TotalData   int32
+		Next        string
+		Prev        string
+	}
+
+	var query ReqGetEvenys
+
+	if err := ctx.ShouldBindQuery(&query); err != nil {
+		log.Printf("[EventHandler.GetEvents] ShouldBindQuery : ")
+	}
+
 }
